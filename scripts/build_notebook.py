@@ -54,7 +54,7 @@ plt.rcParams["figure.dpi"] = 110
 plt.rcParams["savefig.bbox"] = "tight"
 
 FEATURE_COLS = [
-    "step", "type_code", "amount", "oldbalance", "newbalance",
+    "step", "type_code", "amount", "oldbalanceOrg", "newbalanceOrig",
     "oldbalanceDest", "newbalanceDest", "balance_drained",
     "orig_balance_delta", "dest_balance_delta", "amount_to_orig_balance",
     "dest_balance_zero", "hour_of_day", "is_night",
@@ -267,9 +267,9 @@ def build():  # noqa: PLR0915
     ))
 
     # 2.5 Account conventions
-    bad_orig = int(raw.filter(~pl.col("accountID").str.starts_with("C")).height)
+    bad_orig = int(raw.filter(~pl.col("nameOrig").str.starts_with("C")).height)
     bad_dest = int(raw.filter(
-        ~pl.col("accountDest").str.starts_with("C") & ~pl.col("accountDest").str.starts_with("M")
+        ~pl.col("nameDest").str.starts_with("C") & ~pl.col("nameDest").str.starts_with("M")
     ).height)
     cells.append(md(
         "### Account IDs\n\n"
@@ -277,10 +277,10 @@ def build():  # noqa: PLR0915
         "(`M...`)."
     ))
     cells.append(code(
-        "bad_orig = df.filter(~pl.col('accountID').str.starts_with('C')).height\n"
+        "bad_orig = df.filter(~pl.col('nameOrig').str.starts_with('C')).height\n"
         "bad_dest = df.filter(\n"
-        "    ~pl.col('accountDest').str.starts_with('C')\n"
-        "    & ~pl.col('accountDest').str.starts_with('M')\n"
+        "    ~pl.col('nameDest').str.starts_with('C')\n"
+        "    & ~pl.col('nameDest').str.starts_with('M')\n"
         ").height\n"
         "print(f'Bad originators: {bad_orig}')\n"
         "print(f'Bad destinations: {bad_dest}')",
@@ -291,24 +291,24 @@ def build():  # noqa: PLR0915
     # 2.6 Balance arithmetic
     eps = 0.01
     expected = pl.when(pl.col("type") == "CASH_IN").then(
-        pl.col("oldbalance") + pl.col("amount")
-    ).otherwise(pl.col("oldbalance") - pl.col("amount"))
-    df_check = raw.with_columns(balance_mismatch=(pl.col("newbalance") - expected).abs() > eps)
+        pl.col("oldbalanceOrg") + pl.col("amount")
+    ).otherwise(pl.col("oldbalanceOrg") - pl.col("amount"))
+    df_check = raw.with_columns(balance_mismatch=(pl.col("newbalanceOrig") - expected).abs() > eps)
     n_mismatch = int(df_check["balance_mismatch"].sum())
     n_mismatch_fraud = int(df_check.filter(pl.col("balance_mismatch") & (pl.col("isFraud") == 1)).height)
 
     cells.append(md(
         "### Balance arithmetic\n\n"
-        "For outflows: `newbalance = oldbalance - amount`. For `CASH_IN`: `newbalance = "
-        "oldbalance + amount`. The PaySim paper notes that balance fields are noisy, "
+        "For outflows: `newbalanceOrig = oldbalanceOrg - amount`. For `CASH_IN`: `newbalanceOrig = "
+        "oldbalanceOrg + amount`. The PaySim paper notes that balance fields are noisy, "
         "especially for fraud — so mismatches aren't bugs, they're a signal."
     ))
     cells.append(code(
         "expected = pl.when(pl.col('type') == 'CASH_IN').then(\n"
-        "    pl.col('oldbalance') + pl.col('amount')\n"
-        ").otherwise(pl.col('oldbalance') - pl.col('amount'))\n\n"
+        "    pl.col('oldbalanceOrg') + pl.col('amount')\n"
+        ").otherwise(pl.col('oldbalanceOrg') - pl.col('amount'))\n\n"
         "df_check = df.with_columns(\n"
-        "    balance_mismatch=(pl.col('newbalance') - expected).abs() > 0.01\n"
+        "    balance_mismatch=(pl.col('newbalanceOrig') - expected).abs() > 0.01\n"
         ")\n"
         "n_mismatch = int(df_check['balance_mismatch'].sum())\n"
         "n_mismatch_fraud = int(df_check.filter(\n"
@@ -325,7 +325,7 @@ def build():  # noqa: PLR0915
     ))
     cells.append(md(
         f"{n_mismatch / raw.height:.0%} of rows have inconsistent arithmetic. In this "
-        "synthetic data they're all underflow cases (`amount > oldbalance`, `newbalance` "
+        "synthetic data they're all underflow cases (`amount > oldbalanceOrg`, `newbalanceOrig` "
         "clamped to 0). In real PaySim the inconsistency lands disproportionately on fraud "
         "rows because of a documented destination-balance reporting quirk — the "
         "`dest_balance_zero` and `balance_drained` features pick that up either way."
@@ -447,7 +447,7 @@ def build():  # noqa: PLR0915
 
     # 3.3 Drainage
     drainage = raw.with_columns(
-        balance_drained=(pl.col("newbalance") == 0) & (pl.col("oldbalance") > 0)
+        balance_drained=(pl.col("newbalanceOrig") == 0) & (pl.col("oldbalanceOrg") > 0)
     )
     n_drained = int(drainage.filter(pl.col("balance_drained")).height)
     n_fraud_drained = int(drainage.filter(pl.col("balance_drained") & (pl.col("isFraud") == 1)).height)
@@ -460,7 +460,7 @@ def build():  # noqa: PLR0915
     ))
     cells.append(code(
         "drainage = df.with_columns(\n"
-        "    balance_drained=(pl.col('newbalance') == 0) & (pl.col('oldbalance') > 0)\n"
+        "    balance_drained=(pl.col('newbalanceOrig') == 0) & (pl.col('oldbalanceOrg') > 0)\n"
         ")\n"
         "n_drained = drainage.filter(pl.col('balance_drained')).height\n"
         "n_fraud_drained = drainage.filter(\n"

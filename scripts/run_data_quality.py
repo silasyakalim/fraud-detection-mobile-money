@@ -35,8 +35,8 @@ EXPECTED_TYPES = {"CASH_IN", "CASH_OUT", "DEBIT", "PAYMENT", "TRANSFER"}
 EXPECTED_DTYPES = {
     "step": pl.Int32,
     "amount": pl.Float64,
-    "oldbalance": pl.Float64,
-    "newbalance": pl.Float64,
+    "oldbalanceOrg": pl.Float64,
+    "newbalanceOrig": pl.Float64,
     "oldbalanceDest": pl.Float64,
     "newbalanceDest": pl.Float64,
     "isFraud": pl.Int8,
@@ -97,10 +97,10 @@ def check_duplicates(df: pl.DataFrame) -> Check:
 
 
 def check_balance_arithmetic(df: pl.DataFrame) -> Check:
-    """Check whether oldbalance, newbalance, amount add up.
+    """Check whether oldbalanceOrg, newbalanceOrig, amount add up.
 
-    For outflow types: ``newbalance ≈ oldbalance - amount``.
-    For CASH_IN: ``newbalance ≈ oldbalance + amount``.
+    For outflow types: ``newbalanceOrig ≈ oldbalanceOrg - amount``.
+    For CASH_IN: ``newbalanceOrig ≈ oldbalanceOrg + amount``.
 
     Inconsistencies aren't necessarily bugs; PaySim documents balance-field
     noise that the modeling code uses as a feature. Reported as info, not
@@ -108,12 +108,12 @@ def check_balance_arithmetic(df: pl.DataFrame) -> Check:
     """
     eps = 0.01
     expected = pl.when(pl.col("type") == "CASH_IN").then(
-        pl.col("oldbalance") + pl.col("amount")
+        pl.col("oldbalanceOrg") + pl.col("amount")
     ).otherwise(
-        pl.col("oldbalance") - pl.col("amount")
+        pl.col("oldbalanceOrg") - pl.col("amount")
     )
     df_ann = df.with_columns(
-        balance_mismatch=(pl.col("newbalance") - expected).abs() > eps
+        balance_mismatch=(pl.col("newbalanceOrig") - expected).abs() > eps
     )
     n_mismatch = int(df_ann["balance_mismatch"].sum())
     n_mismatch_fraud = int(
@@ -147,7 +147,7 @@ def check_negative_or_zero(df: pl.DataFrame) -> Check:
     neg_amount = int(df.filter(pl.col("amount") < 0).height)
     zero_amount = int(df.filter(pl.col("amount") == 0).height)
     neg_balance = int(
-        df.filter((pl.col("oldbalance") < 0) | (pl.col("newbalance") < 0)).height
+        df.filter((pl.col("oldbalanceOrg") < 0) | (pl.col("newbalanceOrig") < 0)).height
     )
     issues = []
     if neg_amount:
@@ -176,11 +176,11 @@ def check_account_conventions(df: pl.DataFrame) -> Check:
     Destinations may be customers (C...) or merchants (M...). Anything else is
     a schema violation.
     """
-    bad_orig = int(df.filter(~pl.col("accountID").str.starts_with("C")).height)
+    bad_orig = int(df.filter(~pl.col("nameOrig").str.starts_with("C")).height)
     bad_dest = int(
         df.filter(
-            ~pl.col("accountDest").str.starts_with("C")
-            & ~pl.col("accountDest").str.starts_with("M")
+            ~pl.col("nameDest").str.starts_with("C")
+            & ~pl.col("nameDest").str.starts_with("M")
         ).height
     )
     issues = []
@@ -304,7 +304,7 @@ def write_markdown(checks: list[Check], path: Path) -> None:
             lines.append(json.dumps(c.counts, indent=2))
             lines.append("\n```\n\n")
 
-    path.write_text("".join(lines))
+    path.write_text("".join(lines), encoding="utf-8")
 
 
 def main() -> int:
@@ -315,7 +315,7 @@ def main() -> int:
     results: list[Check] = []
     for check_fn in CHECKS:
         c = check_fn(df)
-        icon = "✓" if c.passed else ("✗" if c.severity == "critical" else "!")
+        icon = "[PASS]" if c.passed else ("[FAIL]" if c.severity == "critical" else "[WARN]")
         print(f"  {icon} [{c.severity:8}] {c.name}: {c.detail}")
         results.append(c)
 
@@ -323,10 +323,22 @@ def main() -> int:
     out_md = REPO_ROOT / "docs" / "data_quality.md"
     out_json = REPO_ROOT / "docs" / "data_quality.json"
     write_markdown(results, out_md)
-    out_json.write_text(json.dumps(
-        [{"name": c.name, "passed": c.passed, "severity": c.severity, "detail": c.detail, "counts": c.counts} for c in results],
-        indent=2,
-    ))
+    out_json.write_text(
+        json.dumps(
+            [
+                {
+                    "name": c.name,
+                    "passed": c.passed,
+                    "severity": c.severity,
+                    "detail": c.detail,
+                    "counts": c.counts,
+                }
+                for c in results
+            ],
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     print(f"\nReport written to {out_md}")
     print(f"JSON written to {out_json}")
@@ -334,7 +346,7 @@ def main() -> int:
     # Fail if any critical check failed
     n_critical_failures = sum(1 for c in results if not c.passed and c.severity == "critical")
     if n_critical_failures:
-        print(f"\n❌ {n_critical_failures} critical check(s) failed.")
+        print(f"\n{n_critical_failures} critical check(s) failed.")
         return 1
     return 0
 

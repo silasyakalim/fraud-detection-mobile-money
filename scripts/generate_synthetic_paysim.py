@@ -78,7 +78,7 @@ def generate_paysim(
     old_balance = np.exp(rng.normal(10.5, 1.5, size=n_rows)).round(2)
     old_balance = np.clip(old_balance, 0.0, 1e7)
 
-    # Compute newbalance based on transaction direction
+    # Compute newbalanceOrig based on transaction direction
     new_balance = np.where(
         np.isin(types, ["CASH_OUT", "TRANSFER", "DEBIT", "PAYMENT"]),
         np.maximum(0, old_balance - amount),
@@ -167,10 +167,10 @@ def generate_paysim(
             "step": steps,
             "type": pd.Categorical(types, categories=["CASH_IN", "CASH_OUT", "DEBIT", "PAYMENT", "TRANSFER"]),
             "amount": amount.astype(np.float64),
-            "accountID": account_id,
-            "oldbalance": old_balance.astype(np.float64),
-            "newbalance": new_balance.astype(np.float64),
-            "accountDest": account_dest,
+            "nameOrig": account_id,
+            "oldbalanceOrg": old_balance.astype(np.float64),
+            "newbalanceOrig": new_balance.astype(np.float64),
+            "nameDest": account_dest,
             "oldbalanceDest": old_balance_dest.astype(np.float64),
             "newbalanceDest": new_balance_dest.astype(np.float64),
             "isFraud": is_fraud,

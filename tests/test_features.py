@@ -25,11 +25,11 @@ def test_balance_features_present(synthetic_paysim: pl.DataFrame) -> None:
 
 
 def test_balance_drained_logic(synthetic_paysim: pl.DataFrame) -> None:
-    """balance_drained should fire when newbalance is 0 and old was > 0."""
+    """balance_drained should fire when newbalanceOrig is 0 and old was > 0."""
     out = add_balance_features(synthetic_paysim.lazy()).collect()
     drained = out.filter(pl.col("balance_drained"))
-    assert (drained["newbalance"] == 0).all()
-    assert (drained["oldbalance"] > 0).all()
+    assert (drained["newbalanceOrig"] == 0).all()
+    assert (drained["oldbalanceOrg"] > 0).all()
 
 
 def test_temporal_features_in_range(synthetic_paysim: pl.DataFrame) -> None:
@@ -41,7 +41,7 @@ def test_temporal_features_in_range(synthetic_paysim: pl.DataFrame) -> None:
 def test_account_type_flags(synthetic_paysim: pl.DataFrame) -> None:
     out = add_account_type_features(synthetic_paysim.lazy()).collect()
     merchants = out.filter(pl.col("dest_is_merchant"))
-    assert merchants["accountDest"].str.starts_with("M").all()
+    assert merchants["nameDest"].str.starts_with("M").all()
 
 
 def test_build_tabular_features_idempotent(synthetic_paysim: pl.DataFrame) -> None:

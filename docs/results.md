@@ -101,7 +101,7 @@ A separate report runs in `scripts/run_data_quality.py`.
 | No negative amounts or balances | Pass |
 | Balance arithmetic | 28% of rows inconsistent — informational |
 
-The 28% balance inconsistency is concentrated in legitimate "underflow" transactions (where `amount > oldbalance` and `newbalance` got clamped to 0). In real PaySim, this inconsistency concentrates in *fraud* rows because of the destination-balance quirk — that's an artifact of how this synthetic data was generated. Either way, the modeling code captures both patterns via `dest_balance_zero` and `balance_drained`. See [data_quality.md](data_quality.md) for the full breakdown.
+The 28% balance inconsistency is concentrated in legitimate "underflow" transactions (where `amount > oldbalanceOrg` and `newbalanceOrig` got clamped to 0). In real PaySim, this inconsistency concentrates in *fraud* rows because of the destination-balance quirk — that's an artifact of how this synthetic data was generated. Either way, the modeling code captures both patterns via `dest_balance_zero` and `balance_drained`. See [data_quality.md](data_quality.md) for the full breakdown.
 
 ## Limitations
 

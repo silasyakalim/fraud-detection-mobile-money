@@ -4,10 +4,10 @@ Columns:
   step           int32  - hour of simulation (1-744 over 30 days)
   type           cat    - CASH_IN, CASH_OUT, DEBIT, PAYMENT, TRANSFER
   amount         f64    - transaction amount
-  accountID      str    - originator account
-  oldbalance     f64    - originator balance before
-  newbalance     f64    - originator balance after
-  accountDest    str    - destination account
+  nameOrig      str    - originator account
+  oldbalanceOrg     f64    - originator balance before
+  newbalanceOrig     f64    - originator balance after
+  nameDest    str    - destination account
   oldbalanceDest f64    - destination balance before
   newbalanceDest f64    - destination balance after
   isFraud        i8     - target label (~0.13% positive rate)
@@ -30,10 +30,10 @@ _SCHEMA = {
     "step": pl.Int32,
     "type": pl.Categorical,
     "amount": pl.Float64,
-    "accountID": pl.String,
-    "oldbalance": pl.Float64,
-    "newbalance": pl.Float64,
-    "accountDest": pl.String,
+    "nameOrig": pl.String,
+    "oldbalanceOrg": pl.Float64,
+    "newbalanceOrig": pl.Float64,
+    "nameDest": pl.String,
     "oldbalanceDest": pl.Float64,
     "newbalanceDest": pl.Float64,
     "isFraud": pl.Int8,

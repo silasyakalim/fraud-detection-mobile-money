@@ -41,10 +41,10 @@ def synthetic_paysim(rng: np.random.Generator) -> pl.DataFrame:
             "step": rng.integers(1, 745, size=n).astype(np.int32),
             "type": pl.Series(types).cast(pl.Categorical),
             "amount": amount,
-            "accountID": [f"C{i}" for i in rng.integers(1, 1000, size=n)],
-            "oldbalance": old_orig,
-            "newbalance": new_orig,
-            "accountDest": [
+            "nameOrig": [f"C{i}" for i in rng.integers(1, 1000, size=n)],
+            "oldbalanceOrg": old_orig,
+            "newbalanceOrig": new_orig,
+            "nameDest": [
                 ("M" if rng.random() < 0.4 else "C") + str(i) for i in rng.integers(1, 800, size=n)
             ],
             "oldbalanceDest": old_dest,

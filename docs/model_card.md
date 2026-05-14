@@ -25,7 +25,7 @@ Features are tabular only (balance ratios, drainage signals, temporal flags, acc
 
 - **Source**: 500K-row synthetic dataset shaped to match PaySim ([Lopez-Rojas et al., EMSS 2016](https://www.kaggle.com/datasets/ealaxi/paysim1)).
 - **Generation**: `scripts/generate_synthetic_paysim.py` produces account-drain + cash-out fraud pairs at a 0.13% base rate, with the documented PaySim "destination-balance quirk" preserved.
-- **Schema**: 11 columns (`step`, `type`, `amount`, `accountID`/`accountDest`, `oldbalance`/`newbalance`/`oldbalanceDest`/`newbalanceDest`, `isFraud`, `isFlaggedFraud`).
+- **Schema**: 11 columns (`step`, `type`, `amount`, `nameOrig`/`nameDest`, `oldbalanceOrg`/`newbalanceOrig`/`oldbalanceDest`/`newbalanceDest`, `isFraud`, `isFlaggedFraud`).
 - **Class balance**: 650 fraud / 499,350 legit (0.13% positive rate).
 - **Time ordering**: `step` is hourly, 1–744 covering 30 simulated days.
 

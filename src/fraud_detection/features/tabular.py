@@ -25,12 +25,12 @@ def add_balance_features(lf: pl.LazyFrame) -> pl.LazyFrame:
     than imputing.
     """
     return lf.with_columns(
-        balance_drained=(pl.col("newbalance") == 0) & (pl.col("oldbalance") > 0),
-        orig_balance_delta=pl.col("oldbalance") - pl.col("newbalance"),
+        balance_drained=(pl.col("newbalanceOrig") == 0) & (pl.col("oldbalanceOrg") > 0),
+        orig_balance_delta=pl.col("oldbalanceOrg") - pl.col("newbalanceOrig"),
         dest_balance_delta=pl.col("newbalanceDest") - pl.col("oldbalanceDest"),
         amount_to_orig_balance=(
             pl.col("amount")
-            / pl.when(pl.col("oldbalance") > 0).then(pl.col("oldbalance")).otherwise(1.0)
+            / pl.when(pl.col("oldbalanceOrg") > 0).then(pl.col("oldbalanceOrg")).otherwise(1.0)
         ),
         dest_balance_zero=(pl.col("oldbalanceDest") == 0) & (pl.col("newbalanceDest") == 0),
     )
@@ -48,8 +48,8 @@ def add_temporal_features(lf: pl.LazyFrame) -> pl.LazyFrame:
 def add_account_type_features(lf: pl.LazyFrame) -> pl.LazyFrame:
     """Flag merchant accounts based on the M/C prefix convention."""
     return lf.with_columns(
-        orig_is_merchant=pl.col("accountID").str.starts_with("M"),
-        dest_is_merchant=pl.col("accountDest").str.starts_with("M"),
+        orig_is_merchant=pl.col("nameOrig").str.starts_with("M"),
+        dest_is_merchant=pl.col("nameDest").str.starts_with("M"),
     )
 
 
@@ -67,15 +67,15 @@ def add_velocity_features(
         lf = lf.with_columns(
             pl.col("amount")
             .rolling_sum_by("step", window_size=f"{w}h", closed="right")
-            .over("accountID")
+            .over("nameOrig")
             .alias(f"orig_amount_sum_{w}h"),
             pl.col("amount")
             .rolling_mean_by("step", window_size=f"{w}h", closed="right")
-            .over("accountID")
+            .over("nameOrig")
             .alias(f"orig_amount_mean_{w}h"),
             pl.lit(1)
             .rolling_sum_by("step", window_size=f"{w}h", closed="right")
-            .over("accountID")
+            .over("nameOrig")
             .alias(f"orig_tx_count_{w}h"),
         )
     return lf
