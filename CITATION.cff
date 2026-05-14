@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you reference this project, please cite it as below."
+title: "Mobile money fraud detection on PaySim"
+abstract: >-
+  Fraud detection on the PaySim mobile money dataset using walk-forward
+  cross-validation, cost-sensitive metrics, and cost-aware class weighting.
+  Includes an honest comparison against the legacy rule-based system shipped
+  with the dataset.
+type: software
+version: "0.1.0"
+date-released: "2026-05-14"
+license: MIT
+repository-code: "https://github.com/silasyakalim/fraud-detection-mobile-money"
+authors:
+  - given-names: "silasyakalim"
+    email: "yakalim15silas@gmail.com"
+keywords:
+  - fraud-detection
+  - mobile-money
+  - machine-learning
+  - imbalanced-classification
+  - walk-forward-validation
+  - cost-sensitive-learning
+references:
+  - type: conference-paper
+    title: "PaySim: A financial mobile money simulator for fraud detection"
+    authors:
+      - family-names: "Lopez-Rojas"
+        given-names: "Edgar Alonso"
+      - family-names: "Elmir"
+        given-names: "Ahmad"
+      - family-names: "Axelsson"
+        given-names: "Stefan"
+    conference:
+      name: "28th European Modeling and Simulation Symposium (EMSS)"
+    year: 2016

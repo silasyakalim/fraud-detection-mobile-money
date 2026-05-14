@@ -1,0 +1,110 @@
+[
+  {
+    "name": "schema_and_dtypes",
+    "passed": true,
+    "severity": "info",
+    "detail": "all columns present with expected dtypes",
+    "counts": {}
+  },
+  {
+    "name": "missing_values",
+    "passed": true,
+    "severity": "info",
+    "detail": "total null cells: 0",
+    "counts": {
+      "all_columns": 0
+    }
+  },
+  {
+    "name": "exact_duplicates",
+    "passed": true,
+    "severity": "info",
+    "detail": "0 exact duplicate rows out of 500,000",
+    "counts": {
+      "duplicate_rows": 0,
+      "unique_rows": 500000
+    }
+  },
+  {
+    "name": "balance_arithmetic_consistency",
+    "passed": true,
+    "severity": "info",
+    "detail": "139,321/500,000 rows have inconsistent balance arithmetic. 0/650 fraud rows (0.0%) are inconsistent vs 139,321 legit rows. Inconsistency is itself a fraud signal \u2014 captured by `dest_balance_zero` and similar features.",
+    "counts": {
+      "total_inconsistent": 139321,
+      "inconsistent_fraud": 0,
+      "inconsistent_legit": 139321,
+      "fraud_inconsistent_pct": 0.0
+    }
+  },
+  {
+    "name": "negative_or_zero_values",
+    "passed": true,
+    "severity": "info",
+    "detail": "no negative values; 0 rows with amount==0",
+    "counts": {
+      "negative_amount": 0,
+      "negative_balance": 0,
+      "zero_amount": 0
+    }
+  },
+  {
+    "name": "account_id_conventions",
+    "passed": true,
+    "severity": "info",
+    "detail": "all account IDs follow C/M convention",
+    "counts": {
+      "bad_originators": 0,
+      "bad_destinations": 0
+    }
+  },
+  {
+    "name": "transaction_type_enum",
+    "passed": true,
+    "severity": "info",
+    "detail": "all 5 documented types present: ['CASH_IN', 'CASH_OUT', 'DEBIT', 'PAYMENT', 'TRANSFER']",
+    "counts": {}
+  },
+  {
+    "name": "label_consistency",
+    "passed": true,
+    "severity": "info",
+    "detail": "isFlaggedFraud is a strict subset of isFraud (as expected)",
+    "counts": {
+      "flag_without_fraud": 0
+    }
+  },
+  {
+    "name": "class_balance",
+    "passed": true,
+    "severity": "info",
+    "detail": "fraud rate 0.1300% (650/500,000)",
+    "counts": {
+      "total_rows": 500000,
+      "fraud_rows": 650,
+      "fraud_rate": 0.0013,
+      "by_type": {
+        "CASH_IN": {
+          "count": 110149,
+          "fraud_rate": 0
+        },
+        "CASH_OUT": {
+          "count": 175325,
+          "fraud_rate": 0.001854
+        },
+        "DEBIT": {
+          "count": 4945,
+          "fraud_rate": 0
+        },
+        "PAYMENT": {
+          "count": 169390,
+          "fraud_rate": 0
+        },
+        "TRANSFER": {
+          "count": 40191,
+          "fraud_rate": 0.008086
+        }
+      }
+    }
+  }
+]

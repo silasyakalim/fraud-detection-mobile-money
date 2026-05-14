@@ -1,0 +1,21 @@
+{
+  "n_rows": 500000,
+  "n_fraud": 650,
+  "fraud_rate": 0.0013,
+  "n_unique_orig": 10001,
+  "n_unique_dest": 12325,
+  "fraud_rate_by_type": {
+    "CASH_IN": 0.0,
+    "CASH_OUT": 0.0018537002709254242,
+    "DEBIT": 0.0,
+    "PAYMENT": 0.0,
+    "TRANSFER": 0.008086387499688985
+  },
+  "temporal": {
+    "mean_daily_volume": 16129.032258064517,
+    "mean_daily_fraud_rate": 0.0013005690711771942,
+    "fraud_rate_std": 0.00041858873294796535
+  },
+  "drainage_precision": 0.0016696045975034754,
+  "drainage_recall": 0.35846153846153844
+}
