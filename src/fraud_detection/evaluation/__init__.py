@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from fraud_detection.evaluation.metrics import (
     expected_cost,
-    precision_at_k,
     pr_auc,
+    precision_at_k,
     threshold_for_alert_volume,
 )
 

@@ -130,9 +130,7 @@ def cost_curve(
     cost_false_positive: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Sweep thresholds and return ``(alert_rates, total_costs)`` arrays."""
-    thresholds = np.quantile(
-        y_score, np.linspace(0.001, 0.999, n_points)
-    )
+    thresholds = np.quantile(y_score, np.linspace(0.001, 0.999, n_points))
     alert_rates = np.zeros(n_points)
     costs = np.zeros(n_points)
     for i, t in enumerate(thresholds):

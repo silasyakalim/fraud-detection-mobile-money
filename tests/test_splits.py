@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from itertools import pairwise
+
 import polars as pl
 import pytest
 
@@ -23,16 +25,14 @@ def test_walk_forward_splits_expanding_window(synthetic_paysim: pl.DataFrame) ->
     """Each successive fold should see at least as much training data."""
     folds = list(walk_forward_splits(synthetic_paysim, n_folds=3, val_window=24))
     train_sizes = [t.height for t, _, _ in folds]
-    assert all(b >= a for a, b in zip(train_sizes, train_sizes[1:], strict=False))
+    assert all(b >= a for a, b in pairwise(train_sizes))
 
 
 def test_walk_forward_rejects_short_span(synthetic_paysim: pl.DataFrame) -> None:
     """Should raise if the time span can't accommodate the requested folds."""
     with pytest.raises(ValueError, match="too small"):
         list(
-            walk_forward_splits(
-                synthetic_paysim, n_folds=20, val_window=200, min_train_window=600
-            )
+            walk_forward_splits(synthetic_paysim, n_folds=20, val_window=200, min_train_window=600)
         )
 
 

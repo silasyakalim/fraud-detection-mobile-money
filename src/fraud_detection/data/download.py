@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import zipfile
+from pathlib import Path
 
 from fraud_detection.config import settings
 from fraud_detection.logging import get_logger
@@ -31,8 +32,8 @@ def download_paysim(*, force: bool = False) -> None:
         return
 
     if not (os.getenv("KAGGLE_USERNAME") and os.getenv("KAGGLE_KEY")):
-        kaggle_json = os.path.expanduser("~/.kaggle/kaggle.json")
-        if not os.path.exists(kaggle_json):
+        kaggle_json = Path("~/.kaggle/kaggle.json").expanduser()
+        if not kaggle_json.exists():
             raise RuntimeError(
                 "Kaggle credentials not found. Set KAGGLE_USERNAME and KAGGLE_KEY "
                 "in .env, or place kaggle.json at ~/.kaggle/kaggle.json."

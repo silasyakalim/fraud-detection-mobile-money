@@ -43,7 +43,7 @@ def configure_logging(level: str | None = None, *, json_logs: bool = False) -> N
 
 def get_logger(name: str | None = None, **initial_context: Any) -> structlog.stdlib.BoundLogger:
     """Get a configured logger, optionally with bound context."""
-    logger = structlog.get_logger(name)
+    logger: structlog.stdlib.BoundLogger = structlog.get_logger(name)
     if initial_context:
         logger = logger.bind(**initial_context)
     return logger

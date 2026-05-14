@@ -28,7 +28,9 @@ def test_expected_cost_decomposes_correctly(
     y_true_scores: tuple[np.ndarray, np.ndarray],
 ) -> None:
     y_true, y_score = y_true_scores
-    cb = expected_cost(y_true, y_score, threshold=0.5, cost_false_negative=100, cost_false_positive=5)
+    cb = expected_cost(
+        y_true, y_score, threshold=0.5, cost_false_negative=100, cost_false_positive=5
+    )
     assert cb.fn_loss == cb.false_negatives * 100
     assert cb.fp_cost == cb.false_positives * 5
     assert cb.total_cost == cb.fn_loss + cb.fp_cost
@@ -75,5 +77,6 @@ def test_cost_curve_shapes(y_true_scores: tuple[np.ndarray, np.ndarray]) -> None
     rates, costs = cost_curve(y_true, y_score, n_points=20)
     assert rates.shape == (20,)
     assert costs.shape == (20,)
-    assert (rates >= 0).all() and (rates <= 1).all()
+    assert (rates >= 0).all()
+    assert (rates <= 1).all()
     assert (costs >= 0).all()

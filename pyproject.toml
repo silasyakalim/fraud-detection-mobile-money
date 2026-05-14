@@ -88,6 +88,10 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR2004", "S101", "ARG"]
 "notebooks/*" = ["E402", "F401", "F811"]
+# Lazy imports inside Typer command bodies keep --help fast.
+"src/fraud_detection/cli.py" = ["PLC0415"]
+# sklearn convention: X is a feature matrix.
+"src/fraud_detection/models/*.py" = ["N806"]
 
 [tool.ruff.format]
 quote-style = "double"

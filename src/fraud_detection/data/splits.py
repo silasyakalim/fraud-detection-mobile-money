@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import cast
 
 import polars as pl
 
@@ -62,8 +63,8 @@ def walk_forward_splits(
     if time_col not in df.columns:
         raise KeyError(f"time column {time_col!r} not in dataframe")
 
-    t_min = int(df[time_col].min() or 0)
-    t_max = int(df[time_col].max() or 0)
+    t_min = cast(int, df[time_col].min() or 0)
+    t_max = cast(int, df[time_col].max() or 0)
     span = t_max - t_min + 1
 
     if span < min_train_window + n_folds * val_window:
@@ -85,19 +86,19 @@ def walk_forward_splits(
         if val_start > t_max:
             break
 
-        train_df = df.filter(
-            (pl.col(time_col) >= train_start) & (pl.col(time_col) <= train_end)
-        )
-        val_df = df.filter(
-            (pl.col(time_col) >= val_start) & (pl.col(time_col) <= val_end)
-        )
+        train_df = df.filter((pl.col(time_col) >= train_start) & (pl.col(time_col) <= train_end))
+        val_df = df.filter((pl.col(time_col) >= val_start) & (pl.col(time_col) <= val_end))
 
-        yield train_df, val_df, Fold(
-            fold_id=i,
-            train_start=train_start,
-            train_end=train_end,
-            val_start=val_start,
-            val_end=val_end,
+        yield (
+            train_df,
+            val_df,
+            Fold(
+                fold_id=i,
+                train_start=train_start,
+                train_end=train_end,
+                val_start=val_start,
+                val_end=val_end,
+            ),
         )
 
 
@@ -115,8 +116,8 @@ def temporal_holdout_split(
     if not 0 < train_frac < 1 or not 0 < val_frac < 1 or train_frac + val_frac >= 1:
         raise ValueError("train_frac and val_frac must each be in (0,1) and sum < 1")
 
-    t_min = int(df[time_col].min() or 0)
-    t_max = int(df[time_col].max() or 0)
+    t_min = cast(int, df[time_col].min() or 0)
+    t_max = cast(int, df[time_col].max() or 0)
     span = t_max - t_min + 1
 
     train_cut = t_min + int(span * train_frac)

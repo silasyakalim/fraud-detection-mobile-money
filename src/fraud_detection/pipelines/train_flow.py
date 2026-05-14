@@ -8,16 +8,15 @@ Run locally:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import mlflow
+import numpy as np
 import polars as pl
 from prefect import flow, task
 from prefect.logging import get_run_logger
 
 from fraud_detection.config import settings
 from fraud_detection.data.load import load_paysim
-from fraud_detection.data.splits import temporal_holdout_split, walk_forward_splits
+from fraud_detection.data.splits import walk_forward_splits
 from fraud_detection.evaluation.metrics import (
     expected_cost,
     pr_auc,
@@ -58,7 +57,7 @@ def train_and_eval(
             config=LightGBMConfig(),
         )
         y_val = val["isFraud"].to_numpy()
-        y_score = booster.predict(val.select(feature_cols).to_pandas())
+        y_score = np.asarray(booster.predict(val.select(feature_cols).to_pandas()))
         threshold = threshold_for_alert_volume(y_score, target_rate=0.005)
         cost = expected_cost(y_val, y_score, threshold)
 

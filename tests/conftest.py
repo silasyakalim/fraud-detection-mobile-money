@@ -45,8 +45,7 @@ def synthetic_paysim(rng: np.random.Generator) -> pl.DataFrame:
             "oldbalance": old_orig,
             "newbalance": new_orig,
             "accountDest": [
-                ("M" if rng.random() < 0.4 else "C") + str(i)
-                for i in rng.integers(1, 800, size=n)
+                ("M" if rng.random() < 0.4 else "C") + str(i) for i in rng.integers(1, 800, size=n)
             ],
             "oldbalanceDest": old_dest,
             "newbalanceDest": new_dest,

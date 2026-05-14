@@ -60,9 +60,7 @@ def load_paysim(
     """
     csv_path = path or settings.data.paysim_path
     if not csv_path.exists():
-        raise FileNotFoundError(
-            f"PaySim CSV not found at {csv_path}. Run `make download-data`."
-        )
+        raise FileNotFoundError(f"PaySim CSV not found at {csv_path}. Run `make download-data`.")
 
     log.info("loading paysim", path=str(csv_path))
     df = pl.read_csv(csv_path, schema_overrides=_SCHEMA)
@@ -71,9 +69,8 @@ def load_paysim(
         if not 0 < sample_frac <= 1:
             raise ValueError(f"sample_frac must be in (0, 1], got {sample_frac}")
         # Stratified by isFraud to preserve class balance.
-        df = (
-            df.group_by("isFraud", maintain_order=True)
-            .map_groups(lambda g: g.sample(fraction=sample_frac, seed=seed))
+        df = df.group_by("isFraud", maintain_order=True).map_groups(
+            lambda g: g.sample(fraction=sample_frac, seed=seed)
         )
         log.info("sampled", frac=sample_frac, rows=df.height)
 
@@ -81,7 +78,7 @@ def load_paysim(
         "loaded",
         rows=df.height,
         cols=df.width,
-        fraud_rate=float(df["isFraud"].mean() or 0),
+        fraud_rate=float(df["isFraud"].mean() or 0),  # type: ignore[arg-type]
     )
     return df
 

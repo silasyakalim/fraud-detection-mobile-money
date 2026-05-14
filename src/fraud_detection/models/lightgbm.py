@@ -132,9 +132,7 @@ def train_lightgbm(
         scale_pos_weight=params["scale_pos_weight"],
     )
 
-    train_set = lgb.Dataset(
-        X_train, label=y_train, categorical_feature=cat_cols or "auto"
-    )
+    train_set = lgb.Dataset(X_train, label=y_train, categorical_feature=cat_cols or "auto")
     val_set = lgb.Dataset(
         X_val, label=y_val, reference=train_set, categorical_feature=cat_cols or "auto"
     )

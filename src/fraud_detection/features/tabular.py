@@ -25,17 +25,14 @@ def add_balance_features(lf: pl.LazyFrame) -> pl.LazyFrame:
     than imputing.
     """
     return lf.with_columns(
-        balance_drained=(pl.col("newbalance") == 0)
-        & (pl.col("oldbalance") > 0),
+        balance_drained=(pl.col("newbalance") == 0) & (pl.col("oldbalance") > 0),
         orig_balance_delta=pl.col("oldbalance") - pl.col("newbalance"),
         dest_balance_delta=pl.col("newbalanceDest") - pl.col("oldbalanceDest"),
         amount_to_orig_balance=(
-            pl.col("amount") / pl.when(pl.col("oldbalance") > 0)
-            .then(pl.col("oldbalance"))
-            .otherwise(1.0)
+            pl.col("amount")
+            / pl.when(pl.col("oldbalance") > 0).then(pl.col("oldbalance")).otherwise(1.0)
         ),
-        dest_balance_zero=(pl.col("oldbalanceDest") == 0)
-        & (pl.col("newbalanceDest") == 0),
+        dest_balance_zero=(pl.col("oldbalanceDest") == 0) & (pl.col("newbalanceDest") == 0),
     )
 
 
