@@ -848,10 +848,15 @@ def build():  # noqa: PLR0915
             f"  Cost @ 0.5%: ${cost_lgb.total_cost:,.0f}\n\n"
         )],
     ))
+    # How far from the CV mean is each test result, measured in CV stds?
+    lr_z = abs(pr_lr - np.mean(lr_pr)) / max(np.std(lr_pr), 1e-9)
+    lgb_z = abs(pr_lgb - np.mean(lgb_pr)) / max(np.std(lgb_pr), 1e-9)
     cells.append(md(
-        f"LR test PR-AUC {pr_lr:.3f}, LightGBM {pr_lgb:.3f}. Both inside the std bands of "
-        f"the CV means ({np.mean(lr_pr):.3f}, {np.mean(lgb_pr):.3f}), so the methodology "
-        "held — no test info leaked into the training decisions."
+        f"LR test PR-AUC {pr_lr:.3f} ({lr_z:.1f}σ from CV mean {np.mean(lr_pr):.3f}); "
+        f"LightGBM {pr_lgb:.3f} ({lgb_z:.1f}σ from CV mean {np.mean(lgb_pr):.3f}). "
+        "Both within roughly two CV stds, so the methodology held — no test info leaked "
+        "into the training decisions. LR's test score being above its CV mean is consistent "
+        "with the held-out window being marginally easier than the average CV fold."
     ))
 
     # 8.1 Confusion matrices
@@ -865,6 +870,12 @@ def build():  # noqa: PLR0915
     y_pred_lgb = (y_score_lgb >= threshold_lgb).astype(int)
     cm_lr = confusion_matrix(y_true, y_pred_lr)
     cm_lgb = confusion_matrix(y_true, y_pred_lgb)
+    # Set-overlap: fraud caught by each model at the 0.5% threshold.
+    fraud_mask = y_true == 1
+    caught_lr = set(np.flatnonzero(fraud_mask & (y_pred_lr == 1)).tolist())
+    caught_lgb = set(np.flatnonzero(fraud_mask & (y_pred_lgb == 1)).tolist())
+    lgb_only = len(caught_lgb - caught_lr)
+    lr_only = len(caught_lr - caught_lgb)
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
     for ax, cm, name in [(axes[0], cm_lr, "Logistic regression"), (axes[1], cm_lgb, "LightGBM")]:
@@ -897,8 +908,9 @@ def build():  # noqa: PLR0915
     cells.append(md(
         f"At a 0.5% alert rate, LR catches {cm_lr[1][1]}/{n_fraud_test} fraud with "
         f"{cm_lr[0][1]} false alerts ({cm_lr[1][1]/(cm_lr[1][1]+cm_lr[0][1]):.1%} "
-        f"precision); LightGBM catches all {cm_lgb[1][1]} with {cm_lgb[0][1]:,} false "
-        f"alerts ({cm_lgb[1][1]/(cm_lgb[1][1]+cm_lgb[0][1]):.1%} precision). LightGBM finds "
+        f"precision); LightGBM catches {cm_lgb[1][1]}/{n_fraud_test} with "
+        f"{cm_lgb[0][1]:,} false alerts "
+        f"({cm_lgb[1][1]/(cm_lgb[1][1]+cm_lgb[0][1]):.1%} precision). LightGBM finds "
         f"{cm_lgb[1][1] - cm_lr[1][1]} more fraud and pays "
         f"{cm_lgb[0][1] - cm_lr[0][1]:,} extra false positives for it."
     ))
@@ -983,13 +995,14 @@ def build():  # noqa: PLR0915
             f"Legacy rule precision: {flag_precision:.0%}\n"
         )],
     ))
+    fires_word = "fires once" if n_flagged == 1 else f"fires {n_flagged} times"
     cells.append(md(
-        f"{flag_precision:.0%} precision, {flag_recall:.1%} recall — the rule fires "
-        f"{n_flagged} time(s) on the {test_df.height:,}-row test set and is correct when it "
-        "does, but it's far too narrow to be a fraud system on its own. The ML models beat "
-        "it on recall by orders of magnitude while still keeping precision in a usable "
-        "range. A sensible split would be to send the rare legacy hit straight to action "
-        "and route ML-only hits to a reviewer."
+        f"{flag_precision:.0%} precision, {flag_recall:.1%} recall — the rule {fires_word} "
+        f"on the {test_df.height:,}-row test set and is correct when it does, but it's far "
+        "too narrow to be a fraud system on its own. The ML models beat it on recall by "
+        "orders of magnitude while still keeping precision in a usable range. A sensible "
+        "split would be to send the rare legacy hit straight to action and route ML-only "
+        "hits to a reviewer."
     ))
 
     # 8.4 Calibration
@@ -1174,16 +1187,19 @@ def build():  # noqa: PLR0915
     extra_fp = cm_lgb[0][1] - cm_lr[0][1]
     # Net dollar impact at the configured cost ratios.
     lgb_savings = extra_caught * settings.cost.false_negative - extra_fp * settings.cost.false_positive
+    lr_only_clause = (
+        f" (LR catches {lr_only} that LightGBM misses)" if lr_only > 0 else ""
+    )
     cells.append(md(
         "## Wrap-up\n\n"
         f"LightGBM is the operationally better choice on this data. LR has higher PR-AUC "
         f"({pr_lr:.3f} vs {pr_lgb:.3f}) and perfect precision at 0.5% alert volume "
-        f"({cm_lr[1][1]}/{int(y_true.sum())} caught, 0 false positives), but it misses "
-        f"{int(y_true.sum()) - cm_lr[1][1]} fraud cases LightGBM does catch. At the "
-        f"placeholder $500/$10 cost ratio, the {extra_caught} extra fraud LightGBM catches "
-        f"is worth roughly ${lgb_savings:,.0f} net even after the {extra_fp} extra reviews. "
-        "Pick LR only if false positives carry legal weight (e.g. immediate account "
-        "freeze); otherwise LightGBM wins.\n\n"
+        f"({cm_lr[1][1]}/{int(y_true.sum())} caught, 0 false positives), but LightGBM "
+        f"catches {lgb_only} fraud cases that LR misses{lr_only_clause}, for a net "
+        f"{extra_caught} additional fraud caught. At the placeholder $500/$10 cost ratio "
+        f"that's worth roughly ${lgb_savings:,.0f} net "
+        f"even after the {extra_fp} extra reviews. Pick LR only if false positives carry "
+        "legal weight (e.g. immediate account freeze); otherwise LightGBM wins.\n\n"
         "Caveats: this is PaySim — a synthetic generator seeded from one month of real "
         "mobile money logs, not production data. Three CV folds is too few for tight std "
         "estimates (LightGBM std 0.33 makes that obvious), no graph features yet, no "
