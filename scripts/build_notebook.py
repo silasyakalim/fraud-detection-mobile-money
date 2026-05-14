@@ -37,6 +37,7 @@ from sklearn.metrics import confusion_matrix
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from fraud_detection.config import settings  # noqa: E402
 from fraud_detection.data.load import load_paysim  # noqa: E402
 from fraud_detection.data.splits import temporal_holdout_split, walk_forward_splits  # noqa: E402
 from fraud_detection.evaluation.metrics import (  # noqa: E402
@@ -332,12 +333,15 @@ def build():  # noqa: PLR0915
             f"  ...of which legit: {n_mismatch - n_mismatch_fraud:,}\n"
         )],
     ))
+    pct_fraud_inc = n_mismatch_fraud / max(1, fraud_count)
+    pct_legit_inc = (n_mismatch - n_mismatch_fraud) / max(1, raw.height - fraud_count)
     cells.append(md(
-        f"{n_mismatch / raw.height:.0%} of rows have inconsistent arithmetic. In this "
-        "synthetic data they're all underflow cases (`amount > oldbalanceOrg`, `newbalanceOrig` "
-        "clamped to 0). In real PaySim the inconsistency lands disproportionately on fraud "
-        "rows because of a documented destination-balance reporting quirk — the "
-        "`dest_balance_zero` and `balance_drained` features pick that up either way."
+        f"{n_mismatch / raw.height:.0%} of rows have inconsistent arithmetic, but it lands "
+        f"on the legitimate side: {pct_legit_inc:.0%} of legit rows are inconsistent vs "
+        f"only {pct_fraud_inc:.1%} of fraud. The bulk is PaySim's documented underflow "
+        "behaviour on legit transactions (`amount > oldbalanceOrg`, `newbalanceOrig` clamped "
+        "to 0). Fraud, by contrast, drains the source account cleanly — the arithmetic "
+        "checks out. `balance_drained` and `dest_balance_zero` encode the parts that matter."
     ))
 
     # =====================================================================
@@ -446,12 +450,17 @@ def build():  # noqa: PLR0915
         outputs=[out_image(temporal_b64)],
     ))
 
+    vol_mean = float(by_day["volume"].mean())
+    fr_mean = float(by_day["fraud_rate"].mean())
+    fr_std = float(by_day["fraud_rate"].std())
+    fr_max = float(by_day["fraud_rate"].max())
     cells.append(md(
-        f"Volume sits around 16k/day, daily fraud rate around "
-        f"{float(by_day['fraud_rate'].mean()):.2%} with std "
-        f"{float(by_day['fraud_rate'].std()):.2%}. Pretty stationary. Walk-forward is still "
-        "the right approach, but the gap vs random splits would be wider on real production "
-        "data where fraudsters adapt."
+        f"Volume sits around {vol_mean/1000:.0f}k/day. Per-day fraud rate is bursty though: "
+        f"mean {fr_mean:.2%} with std {fr_std:.2%} (max {fr_max:.0%}), driven by a handful "
+        "of low-volume days where almost every transaction is a fraud injection. The "
+        "month-over-month trend isn't monotonic but the variance is exactly why walk-forward "
+        "matters here: a model trained on one window can land on a window with very "
+        "different fraud density."
     ))
 
     # 3.3 Drainage
@@ -975,10 +984,12 @@ def build():  # noqa: PLR0915
         )],
     ))
     cells.append(md(
-        f"{flag_precision:.0%} precision, {flag_recall:.0%} recall. Catches half the fraud "
-        "with no false positives. The ML models beat it on recall but lose a lot of "
-        "precision. A sensible split would be to send legacy hits straight to action and "
-        "route ML-only hits to a reviewer."
+        f"{flag_precision:.0%} precision, {flag_recall:.1%} recall — the rule fires "
+        f"{n_flagged} time(s) on the {test_df.height:,}-row test set and is correct when it "
+        "does, but it's far too narrow to be a fraud system on its own. The ML models beat "
+        "it on recall by orders of magnitude while still keeping precision in a usable "
+        "range. A sensible split would be to send the rare legacy hit straight to action "
+        "and route ML-only hits to a reviewer."
     ))
 
     # 8.4 Calibration
@@ -1143,34 +1154,43 @@ def build():  # noqa: PLR0915
         outputs=[out_image(abl_b64)],
     ))
 
-    delta_text = ", ".join(
-        f"`{k.replace('drop ', '')}` → -{base_score - v:.2f}"
+    deltas = [
+        (k.replace("drop ", ""), base_score - v)
         for k, v in ablation.items() if k != "all features"
-    )
+    ]
+    delta_text = ", ".join(f"`{name}` → -{d:.2f}" for name, d in deltas)
+    worst_feat, worst_delta = max(deltas, key=lambda x: x[1])
     cells.append(md(
-        f"Every drop hurts: {delta_text}. The model leans heavily on `oldbalanceDest` — "
-        "losing it cuts PR-AUC by two thirds. The signal isn't really distributed; it's "
-        "mostly that one feature with a couple of helpers."
+        f"Every drop hurts: {delta_text}. The model leans hardest on `{worst_feat}` — "
+        f"losing it cuts PR-AUC by {worst_delta:.2f}. The signal is concentrated on the "
+        "originator-side drainage pattern (`amount` relative to `oldbalanceOrg`, and "
+        "`newbalanceOrig` collapsing to zero) rather than spread evenly across features."
     ))
 
     # =====================================================================
     # SECTION 9: DECISION
     # =====================================================================
+    extra_caught = cm_lgb[1][1] - cm_lr[1][1]
+    extra_fp = cm_lgb[0][1] - cm_lr[0][1]
+    # Net dollar impact at the configured cost ratios.
+    lgb_savings = extra_caught * settings.cost.false_negative - extra_fp * settings.cost.false_positive
     cells.append(md(
         "## Wrap-up\n\n"
-        f"On this dataset LR is the better choice for ops use. Higher PR-AUC "
-        f"({pr_lr:.3f} vs {pr_lgb:.3f}), about the same precision at a realistic alert "
-        f"volume, and far fewer false alerts ({cm_lr[0][1]:,} vs {cm_lgb[0][1]:,}). The "
-        f"{cm_lgb[1][1] - cm_lr[1][1]} extra fraud LightGBM catches isn't worth "
-        f"{cm_lgb[0][1] - cm_lr[0][1]:,} extra reviews. That ranking might flip once graph "
-        "features and hyperparameter tuning land, or on real PaySim where the signal is "
-        "noisier.\n\n"
-        "Caveats: this is synthetic data, three CV folds is too few for tight std "
-        "estimates, no graph features yet, calibration is bad (use scores for ranking only "
-        "until recalibrated), and the $500/$10 cost ratio is a placeholder — a real "
-        "deployment would get those numbers from finance. Production fraud labels also "
-        "arrive with weeks-to-months of lag and are noisy, which this evaluation doesn't "
-        "model."
+        f"LightGBM is the operationally better choice on this data. LR has higher PR-AUC "
+        f"({pr_lr:.3f} vs {pr_lgb:.3f}) and perfect precision at 0.5% alert volume "
+        f"({cm_lr[1][1]}/{int(y_true.sum())} caught, 0 false positives), but it misses "
+        f"{int(y_true.sum()) - cm_lr[1][1]} fraud cases LightGBM does catch. At the "
+        f"placeholder $500/$10 cost ratio, the {extra_caught} extra fraud LightGBM catches "
+        f"is worth roughly ${lgb_savings:,.0f} net even after the {extra_fp} extra reviews. "
+        "Pick LR only if false positives carry legal weight (e.g. immediate account "
+        "freeze); otherwise LightGBM wins.\n\n"
+        "Caveats: this is PaySim — a synthetic generator seeded from one month of real "
+        "mobile money logs, not production data. Three CV folds is too few for tight std "
+        "estimates (LightGBM std 0.33 makes that obvious), no graph features yet, no "
+        "hyperparameter tuning, calibration is poor (use scores for ranking only until "
+        "recalibrated), and the $500/$10 cost ratio is a placeholder. Production fraud "
+        "labels also arrive with weeks-to-months of lag and are noisy, which this "
+        "evaluation doesn't model."
     ))
 
     # Finalize
