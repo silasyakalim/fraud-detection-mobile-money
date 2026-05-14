@@ -29,9 +29,9 @@ LightGBM's optimum on the held-out test: alert about **2.60% of transactions for
 | Model | Val PR-AUC (CV mean) | Test PR-AUC | Val P@0.5% (CV mean) | Test P@0.5% |
 | --- | --- | --- | --- | --- |
 | Logistic regression | 0.890 ± 0.06 | **0.960** | 0.363 ± 0.34 | **1.000** |
-| LightGBM | 0.366 ± 0.40 | **0.884** | 0.354 ± 0.34 | 0.943 |
+| LightGBM | 0.366 ± 0.33 | **0.884** | 0.354 ± 0.33 | 0.943 |
 
-The LightGBM CV std of 0.40 is the headline number — folds 0 and 1 only reach PR-AUC ≈ 0.13, while fold 2 jumps to 0.83. The model is unstable across folds at this sample size: with limited training data the early folds aren't seeing enough fraud examples to learn the pattern. By the final retrain on the full train+val pool (1.2M rows, 1,142 fraud) LightGBM stabilizes at PR-AUC 0.88. LR is much more stable across folds — linear models tolerate small fraud counts better.
+The LightGBM CV std of 0.33 is the headline number — folds 0 and 1 only reach PR-AUC ≈ 0.13, while fold 2 jumps to 0.83. The model is unstable across folds at this sample size: with limited training data the early folds aren't seeing enough fraud examples to learn the pattern. By the final retrain on the full train+val pool (1.2M rows, 1,142 fraud) LightGBM stabilizes at PR-AUC 0.88. LR is much more stable across folds — linear models tolerate small fraud counts better.
 
 ### Confusion matrices on the test set
 
@@ -104,7 +104,7 @@ Note the balance-arithmetic finding: 3,779,503 of 6,362,620 rows (59%) don't sat
 ## Limitations
 
 - **20% stratified sample**, not the full 6.36M rows. Sample size is constrained by ablation memory; the methodology code itself handles the full dataset.
-- **LightGBM CV is unstable** (PR-AUC std 0.40 across folds). The test result is much closer to fold 2 than to the CV mean. Either Optuna tuning or larger min-train-window would tighten this.
+- **LightGBM CV is unstable** (PR-AUC std 0.33 across folds; folds 0 and 1 ≈ 0.13, fold 2 = 0.83). The test result is much closer to fold 2 than to the CV mean. Either Optuna tuning or larger min-train-window would tighten this.
 - **No hyperparameter tuning.** Both models use defaults.
 - **Cost ratios are placeholders.** $500 per missed fraud, $10 per investigator review — calibrated from finance in a real deployment.
 - **Labels are clean.** In production, fraud labels arrive with weeks-to-months of lag and are noisy. A real system would need lag-aware evaluation.
@@ -132,6 +132,6 @@ Per-fold raw numbers in `docs/training_results.json`. Data quality findings in `
 | Metric | Current | Target |
 | --- | --- | --- |
 | Sample fraction used | 20% (1.27M rows) | 100% (6.36M rows) once ablation memory is fixed |
-| LightGBM CV stability | std 0.40 | std < 0.10 with Optuna |
+| LightGBM CV stability | std 0.33 | std < 0.10 with Optuna |
 | Test P@0.5% (LightGBM) | 0.94 | > 0.95 with tuning |
 | Calibration | Poor (overconfident) | Recalibrated via isotonic regression |

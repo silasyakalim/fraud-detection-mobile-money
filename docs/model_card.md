@@ -64,7 +64,7 @@ LightGBM's cost-optimal alert rate is 2.6%, where expected loss falls to ~$11,12
 - No hyperparameter tuning (defaults).
 - No graph/network features (in/out degree, PageRank) — tabular only.
 - No drift monitoring; in production, fraud labels arrive weeks to months late and lag-aware evaluation is required.
-- LightGBM CV is unstable (PR-AUC std 0.40). The test PR-AUC of 0.88 is much closer to fold 2 (0.83) than to the CV mean (0.37) — suggests temporal regime shift or insufficient training data in early folds. Optuna tuning or a larger `min_train_window` would tighten this.
+- LightGBM CV is unstable (PR-AUC std 0.33). The test PR-AUC of 0.88 is much closer to fold 2 (0.83) than to the CV mean (0.37) — suggests temporal regime shift or insufficient training data in early folds. Optuna tuning or a larger `min_train_window` would tighten this.
 
 ## Maintenance
 

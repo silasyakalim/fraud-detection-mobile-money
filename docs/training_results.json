@@ -30,8 +30,8 @@
       ]
     },
     "summary": {
-      "lr": {"pr_auc_mean": 0.890, "pr_auc_std": 0.06, "p_at_0_5pct_mean": 0.363, "p_at_0_5pct_std": 0.34},
-      "lightgbm": {"pr_auc_mean": 0.366, "pr_auc_std": 0.40, "p_at_0_5pct_mean": 0.354, "p_at_0_5pct_std": 0.34}
+      "lr": {"pr_auc_mean": 0.890, "pr_auc_std": 0.059, "p_at_0_5pct_mean": 0.363, "p_at_0_5pct_std": 0.340},
+      "lightgbm": {"pr_auc_mean": 0.366, "pr_auc_std": 0.328, "p_at_0_5pct_mean": 0.354, "p_at_0_5pct_std": 0.334}
     }
   },
   "test_final": {
