@@ -310,8 +310,10 @@ def build():  # noqa: PLR0915
     cells.append(md(
         "### Balance arithmetic\n\n"
         "For outflows: `newbalanceOrig = oldbalanceOrg - amount`. For `CASH_IN`: `newbalanceOrig = "
-        "oldbalanceOrg + amount`. The PaySim paper notes that balance fields are noisy, "
-        "especially for fraud — so mismatches aren't bugs, they're a signal."
+        "oldbalanceOrg + amount`. PaySim clamps negative balances to zero, so legit rows where "
+        "`amount > oldbalanceOrg` will look inconsistent; fraud rows, which are injected with "
+        "consistent balance accounting, mostly check out. The inconsistency *pattern* (which "
+        "side it lands on) is the signal, not the inconsistency itself."
     ))
     cells.append(code(
         "expected = pl.when(pl.col('type') == 'CASH_IN').then(\n"
@@ -458,7 +460,7 @@ def build():  # noqa: PLR0915
         f"Volume sits around {vol_mean/1000:.0f}k/day. Per-day fraud rate is bursty though: "
         f"mean {fr_mean:.2%} with std {fr_std:.2%} (max {fr_max:.0%}), driven by a handful "
         "of low-volume days where almost every transaction is a fraud injection. The "
-        "month-over-month trend isn't monotonic but the variance is exactly why walk-forward "
+        "day-to-day trend isn't monotonic, and that variance is exactly why walk-forward "
         "matters here: a model trained on one window can land on a window with very "
         "different fraud density."
     ))
@@ -957,12 +959,18 @@ def build():  # noqa: PLR0915
         "plt.tight_layout()",
         outputs=[out_image(cost_b64)],
     ))
+    # Test set covers the last 30% of step values; convert to days for review-volume sizing.
+    n_optimal_alerts = int(rates_lgb[optimal_idx] * test_df.height)
+    test_days = (test_df["step"].max() - test_df["step"].min() + 1) / 24
+    alerts_per_day = n_optimal_alerts / test_days
     cells.append(md(
         f"Bottom of the curve is at ~{rates_lgb[optimal_idx]:.2%} alert rate and "
         f"~${costs_lgb[optimal_idx]:,.0f} expected loss — "
-        f"{int(rates_lgb[optimal_idx] * test_df.height):,} alerts out of {test_df.height:,} "
-        "transactions, well within reach of a single reviewer. If FN cost doubles the "
-        "optimum shifts right (more alerts)."
+        f"{n_optimal_alerts:,} alerts out of {test_df.height:,} transactions "
+        f"(~{alerts_per_day:.0f}/day over the {test_days:.0f}-day test window). That's a "
+        "small review team, not a single reviewer. If FN cost doubles the optimum shifts "
+        "right (more alerts); if reviewer capacity is the binding constraint, you'd cap "
+        "alert volume below the cost-optimum rate and accept the higher expected loss."
     ))
 
     # 8.3 Legacy baseline
@@ -1052,10 +1060,11 @@ def build():  # noqa: PLR0915
     ))
     cells.append(md(
         "Both curves sit below the diagonal, so the predicted probabilities are inflated — "
-        "a direct effect of `scale_pos_weight` biasing the loss toward positives. Use the "
-        "scores for ranking, not as probabilities. If a consumer actually needs calibrated "
-        "probabilities, fit Platt scaling or isotonic regression on the validation set "
-        "before serving."
+        "a direct effect of the imbalance correction in each model (`scale_pos_weight` for "
+        "LightGBM, `class_weight='balanced'` for LR), which up-weights the positive class "
+        "in the loss. Use the scores for ranking, not as probabilities. If a consumer "
+        "actually needs calibrated probabilities, fit Platt scaling or isotonic regression "
+        "on the validation set before serving."
     ))
 
     # 8.5 Feature importance + ablation
