@@ -61,6 +61,12 @@ FEATURE_COLS = [
     "orig_is_merchant", "dest_is_merchant",
 ]
 
+# Stratified sample fraction used by the notebook. Full PaySim is 6.36M rows;
+# the ablation phase trains LightGBM repeatedly and OOMs on machines with
+# < 16 GB RAM. 20% gives ~1.27M rows (~1.6k fraud), which is plenty for the
+# methodology demonstration. Set to None to load the full dataset.
+LOAD_SAMPLE_FRAC = 0.2
+
 
 # ---------- Cell helpers ----------
 
@@ -145,7 +151,10 @@ def build():  # noqa: PLR0915
         "Working through PaySim, building a couple of models, and seeing how they hold up on "
         "a held-out test set. Walk-forward splits on `step` because the data is time-ordered. "
         "PR-AUC and precision@k instead of accuracy because the fraud rate is 0.13% — "
-        "predicting \"not fraud\" everywhere gets 99.87% accuracy and is useless."
+        "predicting \"not fraud\" everywhere gets 99.87% accuracy and is useless.\n\n"
+        f"Loaded with a stratified `sample_frac={LOAD_SAMPLE_FRAC}` to keep the ablation phase "
+        "within memory on a typical 16 GB machine. Set `LOAD_SAMPLE_FRAC = None` in "
+        "`scripts/build_notebook.py` to re-run on the full 6.36M-row PaySim if you have the RAM."
     ))
 
     # =====================================================================
@@ -179,9 +188,9 @@ def build():  # noqa: PLR0915
         "sns.set_theme(style='whitegrid', palette='muted')"
     ))
 
-    raw = load_paysim()
+    raw = load_paysim(sample_frac=LOAD_SAMPLE_FRAC)
     cells.append(code(
-        "df = load_paysim()\n"
+        f"df = load_paysim(sample_frac={LOAD_SAMPLE_FRAC})\n"
         "print(f'Shape: {df.shape}')\n"
         "df.head()",
         outputs=[

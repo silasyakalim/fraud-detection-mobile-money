@@ -19,33 +19,33 @@
     "name": "exact_duplicates",
     "passed": true,
     "severity": "info",
-    "detail": "0 exact duplicate rows out of 500,000",
+    "detail": "0 exact duplicate rows out of 6,362,620",
     "counts": {
       "duplicate_rows": 0,
-      "unique_rows": 500000
+      "unique_rows": 6362620
     }
   },
   {
     "name": "balance_arithmetic_consistency",
     "passed": true,
     "severity": "info",
-    "detail": "139,321/500,000 rows have inconsistent balance arithmetic. 0/650 fraud rows (0.0%) are inconsistent vs 139,321 legit rows. Inconsistency is itself a fraud signal \u2014 captured by `dest_balance_zero` and similar features.",
+    "detail": "3,779,503/6,362,620 rows have inconsistent balance arithmetic. 45/8,213 fraud rows (0.5%) are inconsistent vs 3,779,458 legit rows. Inconsistency is itself a fraud signal \u2014 captured by `dest_balance_zero` and similar features.",
     "counts": {
-      "total_inconsistent": 139321,
-      "inconsistent_fraud": 0,
-      "inconsistent_legit": 139321,
-      "fraud_inconsistent_pct": 0.0
+      "total_inconsistent": 3779503,
+      "inconsistent_fraud": 45,
+      "inconsistent_legit": 3779458,
+      "fraud_inconsistent_pct": 0.0055
     }
   },
   {
     "name": "negative_or_zero_values",
     "passed": true,
     "severity": "info",
-    "detail": "no negative values; 0 rows with amount==0",
+    "detail": "no negative values; 16 rows with amount==0",
     "counts": {
       "negative_amount": 0,
       "negative_balance": 0,
-      "zero_amount": 0
+      "zero_amount": 16
     }
   },
   {
@@ -78,31 +78,31 @@
     "name": "class_balance",
     "passed": true,
     "severity": "info",
-    "detail": "fraud rate 0.1300% (650/500,000)",
+    "detail": "fraud rate 0.1291% (8,213/6,362,620)",
     "counts": {
-      "total_rows": 500000,
-      "fraud_rows": 650,
-      "fraud_rate": 0.0013,
+      "total_rows": 6362620,
+      "fraud_rows": 8213,
+      "fraud_rate": 0.001291,
       "by_type": {
         "CASH_IN": {
-          "count": 110149,
+          "count": 1399284,
           "fraud_rate": 0
         },
         "CASH_OUT": {
-          "count": 175325,
-          "fraud_rate": 0.001854
+          "count": 2237500,
+          "fraud_rate": 0.00184
         },
         "DEBIT": {
-          "count": 4945,
+          "count": 41432,
           "fraud_rate": 0
         },
         "PAYMENT": {
-          "count": 169390,
+          "count": 2151495,
           "fraud_rate": 0
         },
         "TRANSFER": {
-          "count": 40191,
-          "fraud_rate": 0.008086
+          "count": 532909,
+          "fraud_rate": 0.007688
         }
       }
     }

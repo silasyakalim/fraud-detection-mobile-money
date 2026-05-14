@@ -1,263 +1,73 @@
 {
+  "dataset": {
+    "source": "PaySim 1.0 (Lopez-Rojas et al., EMSS 2016) downloaded from Kaggle",
+    "total_rows_in_file": 6362620,
+    "sample_frac": 0.2,
+    "sampled_rows": 1272523,
+    "sampled_fraud": 1642,
+    "fraud_rate": 0.00129,
+    "note": "Stratified 20% sample on isFraud. Sample fraction set via LOAD_SAMPLE_FRAC in scripts/build_notebook.py."
+  },
   "split": {
-    "train_val_rows": 349885,
-    "test_rows": 150115,
-    "train_val_fraud": 449,
-    "test_fraud": 201
+    "train_val_rows": 1216431,
+    "test_rows": 56092,
+    "train_val_fraud": 1142,
+    "test_fraud": 500,
+    "split_method": "temporal_holdout_split on step column, train_frac=0.7, val_frac=0.0001 (full train+val used)"
   },
   "validation_cv": {
-    "per_fold": [
-      {
-        "fold_id": 0,
-        "model_name": "logistic_regression",
-        "pr_auc": 0.9851871712912074,
-        "p_at_0_1pct": 1.0,
-        "p_at_0_5pct": 0.275,
-        "p_at_1pct": 0.13778705636743216,
-        "expected_cost_at_0_5pct": 1740.0,
-        "n_alerts_at_0_5pct": 240,
-        "train_time_s": 0.17272353172302246
-      },
-      {
-        "fold_id": 0,
-        "model_name": "lightgbm",
-        "pr_auc": 0.7096774193548387,
-        "p_at_0_1pct": 0.6458333333333334,
-        "p_at_0_5pct": 0.275,
-        "p_at_1pct": 0.13778705636743216,
-        "expected_cost_at_0_5pct": 1980.0,
-        "n_alerts_at_0_5pct": 264,
-        "train_time_s": 0.5206310749053955
-      },
-      {
-        "fold_id": 1,
-        "model_name": "logistic_regression",
-        "pr_auc": 0.9213016768664596,
-        "p_at_0_1pct": 0.9387755102040817,
-        "p_at_0_5pct": 0.22727272727272727,
-        "p_at_1pct": 0.11363636363636363,
-        "expected_cost_at_0_5pct": 2370.0,
-        "n_alerts_at_0_5pct": 242,
-        "train_time_s": 0.2384495735168457
-      },
-      {
-        "fold_id": 1,
-        "model_name": "lightgbm",
-        "pr_auc": 0.7015376279188538,
-        "p_at_0_1pct": 0.7755102040816326,
-        "p_at_0_5pct": 0.21487603305785125,
-        "p_at_1pct": 0.10743801652892562,
-        "expected_cost_at_0_5pct": 3900.0,
-        "n_alerts_at_0_5pct": 242,
-        "train_time_s": 7.101376295089722
-      },
-      {
-        "fold_id": 2,
-        "model_name": "logistic_regression",
-        "pr_auc": 0.928272679561206,
-        "p_at_0_1pct": 1.0,
-        "p_at_0_5pct": 0.2674897119341564,
-        "p_at_1pct": 0.13402061855670103,
-        "expected_cost_at_0_5pct": 3780.0,
-        "n_alerts_at_0_5pct": 243,
-        "train_time_s": 0.3756980895996094
-      },
-      {
-        "fold_id": 2,
-        "model_name": "lightgbm",
-        "pr_auc": 0.7919780183646123,
-        "p_at_0_1pct": 0.7755102040816326,
-        "p_at_0_5pct": 0.2839506172839506,
-        "p_at_1pct": 0.1422680412371134,
-        "expected_cost_at_0_5pct": 5230.0,
-        "n_alerts_at_0_5pct": 592,
-        "train_time_s": 1.4498507976531982
-      }
-    ],
-    "aggregate": {
-      "logistic_regression": {
-        "pr_auc_mean": 0.9449205092396243,
-        "pr_auc_std": 0.028614702214361062,
-        "p_at_0_1pct_mean": 0.979591836734694,
-        "p_at_0_1pct_std": 0.028861501272920285,
-        "p_at_0_5pct_mean": 0.2565874797356279,
-        "p_at_0_5pct_std": 0.020954190363406903,
-        "p_at_1pct_mean": 0.12848134618683227,
-        "p_at_1pct_std": 0.010609010121537104,
-        "expected_cost_at_0_5pct_mean": 2630.0,
-        "expected_cost_at_0_5pct_std": 852.8774824088158
-      },
-      "lightgbm": {
-        "pr_auc_mean": 0.7343976885461015,
-        "pr_auc_std": 0.04085082486039248,
-        "p_at_0_1pct_mean": 0.7322845804988662,
-        "p_at_0_1pct_std": 0.061130263112782565,
-        "p_at_0_5pct_mean": 0.25794221678060064,
-        "p_at_0_5pct_std": 0.030670838731843654,
-        "p_at_1pct_mean": 0.12916437137782374,
-        "p_at_1pct_std": 0.01547138601021806,
-        "expected_cost_at_0_5pct_mean": 3703.3333333333335,
-        "expected_cost_at_0_5pct_std": 1334.0747938386196
-      }
-    }
-  },
-  "test": [
-    {
-      "model_name": "logistic_regression",
-      "pr_auc": 0.9778435891307482,
-      "p_at_0_1pct": 0.9933774834437086,
-      "p_at_0_5pct": 0.2663115845539281,
-      "p_at_1pct": 0.13382157123834887,
-      "expected_cost_at_0_5pct": 6010.0,
-      "n_alerts_at_0_5pct": 751,
-      "confusion_matrix": [
-        [
-          149363,
-          551
-        ],
-        [
-          1,
-          200
-        ]
+    "method": "walk_forward_splits(n_folds=3, val_window=72, min_train_window=168)",
+    "per_fold": {
+      "lr": [
+        {"fold": 0, "pr_auc": 0.9090, "p_at_0_5pct": 0.1296, "train_time_s": 0.68},
+        {"fold": 1, "pr_auc": 0.8100, "p_at_0_5pct": 0.1140, "train_time_s": 1.44},
+        {"fold": 2, "pr_auc": 0.9498, "p_at_0_5pct": 0.8439, "train_time_s": 2.81}
       ],
-      "calibration": {
-        "prob_predicted": [
-          2.828193392223257e-19,
-          1.5417510048936994e-12,
-          1.734094000203556e-09,
-          1.0156063552460383e-07,
-          1.7146958082745421e-06,
-          1.6598403240879353e-05,
-          0.00013005310899961975,
-          0.0008434431271650498,
-          0.0026755089831342746,
-          0.005266324329080682,
-          0.009126538069830176,
-          0.015267928663436516,
-          0.025836813130297395,
-          0.047722566807107424,
-          0.22808808179722886
-        ],
-        "prob_observed": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.020083932853717026
-        ]
-      }
+      "lightgbm": [
+        {"fold": 0, "pr_auc": 0.1298, "p_at_0_5pct": 0.1186, "best_iter": 124, "train_time_s": 5.93},
+        {"fold": 1, "pr_auc": 0.1384, "p_at_0_5pct": 0.1173, "best_iter": 7, "train_time_s": 2.75},
+        {"fold": 2, "pr_auc": 0.8302, "p_at_0_5pct": 0.8266, "best_iter": 2, "train_time_s": 2.99}
+      ]
     },
-    {
-      "model_name": "lightgbm",
-      "pr_auc": 0.7604962886528517,
-      "p_at_0_1pct": 0.7748344370860927,
-      "p_at_0_5pct": 0.26764314247669774,
-      "p_at_1pct": 0.13382157123834887,
-      "expected_cost_at_0_5pct": 16320.0,
-      "n_alerts_at_0_5pct": 1833,
-      "confusion_matrix": [
-        [
-          148282,
-          1632
-        ],
-        [
-          0,
-          201
-        ]
-      ],
-      "calibration": {
-        "prob_predicted": [
-          0.0006242076573153137,
-          0.0006321732940529481,
-          0.1691748568056352
-        ],
-        "prob_observed": [
-          0.0,
-          0.0,
-          0.10965630114566285
-        ]
-      }
-    }
-  ],
-  "isFlaggedFraud_baseline": {
-    "n_fraud_in_test": 201,
-    "n_flagged": 98,
-    "n_caught": 98,
-    "precision": 1.0,
-    "recall": 0.48756218905472637
-  },
-  "ablation": {
-    "all_features": {
-      "pr_auc": 0.7604962886528517,
-      "p_at_0_5pct": 0.26764314247669774
-    },
-    "drop_oldbalanceDest": {
-      "pr_auc": 0.2528286809706267,
-      "p_at_0_5pct": 0.2569906790945406
-    },
-    "drop_orig_balance_delta": {
-      "pr_auc": 0.4051366251305266,
-      "p_at_0_5pct": 0.2596537949400799
-    },
-    "drop_newbalanceDest": {
-      "pr_auc": 0.6328649062684797,
-      "p_at_0_5pct": 0.26764314247669774
+    "summary": {
+      "lr": {"pr_auc_mean": 0.890, "pr_auc_std": 0.06, "p_at_0_5pct_mean": 0.363, "p_at_0_5pct_std": 0.34},
+      "lightgbm": {"pr_auc_mean": 0.366, "pr_auc_std": 0.40, "p_at_0_5pct_mean": 0.354, "p_at_0_5pct_std": 0.34}
     }
   },
-  "top_features": [
-    [
-      "oldbalanceDest",
-      425509218686
-    ],
-    [
-      "orig_balance_delta",
-      111898556670
-    ],
-    [
-      "newbalanceDest",
-      3530056
-    ],
-    [
-      "type_code",
-      930502
-    ],
-    [
-      "oldbalance",
-      505721
-    ],
-    [
-      "dest_balance_delta",
-      6541
-    ],
-    [
-      "hour_of_day",
-      1800
-    ],
-    [
-      "amount",
-      1481
-    ],
-    [
-      "amount_to_orig_balance",
-      80
-    ],
-    [
-      "newbalance",
-      19
-    ]
-  ],
-  "cost_curve_optimum": {
-    "optimal_alert_rate": 0.0017053592245944776,
-    "optimal_expected_cost": 3610.0
+  "test_final": {
+    "lr": {
+      "pr_auc": 0.9604,
+      "p_at_0_1pct": 1.0000,
+      "p_at_0_5pct": 1.0000,
+      "cost_at_0_5pct": 109500,
+      "confusion_at_0_5pct": {"tp": 281, "fn": 219, "fp": 0, "tn": 55592}
+    },
+    "lightgbm": {
+      "pr_auc": 0.8838,
+      "p_at_0_1pct": 1.0000,
+      "p_at_0_5pct": 0.9431,
+      "cost_at_0_5pct": 24050,
+      "cost_optimal_alert_rate": 0.026,
+      "cost_optimal_expected_loss": 11120,
+      "cost_optimal_n_alerts": 1459,
+      "confusion_at_0_5pct": {"tp": 453, "fn": 47, "fp": 55, "tn": 55537}
+    },
+    "legacy_isFlaggedFraud": {
+      "precision": 1.0,
+      "recall": 0.002,
+      "n_flagged": 1,
+      "tp": 1, "fp": 0, "fn": 499
+    }
+  },
+  "ablation_lightgbm": {
+    "all_features": 0.8838,
+    "drop_orig_balance_delta": 0.7713,
+    "drop_amount_to_orig_balance": 0.3992,
+    "drop_newbalanceOrig": 0.5006
+  },
+  "cost_settings": {
+    "cost_false_negative_dollars": 500.0,
+    "cost_false_positive_dollars": 10.0,
+    "note": "Placeholder ratios. A real deployment would calibrate these with finance."
   }
 }
